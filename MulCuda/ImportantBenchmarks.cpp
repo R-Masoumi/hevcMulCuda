@@ -17,7 +17,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_DST)->ArgName("M")->Arg(350)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_DST)->ArgName("M")->Arg(100)->UseManualTime();
 //
 //static void BM_GPU_DST(benchmark::State& state) {
 //
@@ -54,7 +54,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_DCT4)->ArgName("M")->Arg(350)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_DCT4)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_DCT4(benchmark::State& state) {
 //
@@ -93,7 +93,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_DCT8)->ArgName("M")->Arg(250)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_DCT8)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_DCT8(benchmark::State& state) {
 //
@@ -131,7 +131,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_DCT16)->ArgName("M")->Arg(100)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_DCT16)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_DCT16(benchmark::State& state) {
 //
@@ -169,7 +169,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_DCT32)->ArgName("M")->Arg(30)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_DCT32)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_DCT32(benchmark::State& state) {
 //
@@ -206,7 +206,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_IDST)->ArgName("M")->Arg(350)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_IDST)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_IDST(benchmark::State& state) {
 //
@@ -244,7 +244,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_IDCT4)->ArgName("M")->Arg(350)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_IDCT4)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_IDCT4(benchmark::State& state) {
 //
@@ -282,7 +282,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_IDCT8)->ArgName("M")->Arg(150)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_IDCT8)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_IDCT8(benchmark::State& state) {
 //
@@ -320,7 +320,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_IDCT16)->ArgName("M")->Arg(100)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_IDCT16)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_IDCT16(benchmark::State& state) {
 //
@@ -358,7 +358,7 @@
 //	}
 //	cudaDestroy();
 //}
-//BENCHMARK(BM_GPU_BATCH_IDCT32)->ArgName("M")->Arg(100)->UseManualTime();
+//BENCHMARK(BM_GPU_BATCH_IDCT32)->ArgName("M")->Arg(10000)->UseManualTime();
 //
 //static void BM_GPU_IDCT32(benchmark::State& state) {
 //

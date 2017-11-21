@@ -1,6 +1,5 @@
 #include <benchmark/benchmark.h>
 #include "dct.h"
-#define ADD_CASES(...) int CONCAT(dummy, __LINE__) = ::AddCases(__VA_ARGS__)
 
 static void BM_GPU_DST(benchmark::State& state) {
 
@@ -211,7 +210,7 @@ static void BM_GPU_BATCH_DST(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_DST)->ArgName("Ms")->Arg(350)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_DST)->ArgName("Ms")->Arg(100)->UseManualTime();
 
 static void BM_GPU_BATCH_DCT4(benchmark::State& state) {
 	int batch = state.range(0);
@@ -229,7 +228,7 @@ static void BM_GPU_BATCH_DCT4(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_DCT4)->ArgName("Ms")->Arg(350)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_DCT4)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 //->ArgNames({ "Plain", "Shared Memory", "Minimum Multiplications", "One Step", "Atomic" })
 
@@ -249,7 +248,7 @@ static void BM_GPU_BATCH_DCT8(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_DCT8)->ArgName("Ms")->Arg(150)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_DCT8)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_DCT16(benchmark::State& state) {
@@ -268,7 +267,7 @@ static void BM_GPU_BATCH_DCT16(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_DCT16)->ArgName("Ms")->Arg(100)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_DCT16)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_DCT32(benchmark::State& state) {
@@ -287,7 +286,7 @@ static void BM_GPU_BATCH_DCT32(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_DCT32)->ArgName("Ms")->Arg(30)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_DCT32)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 
@@ -307,7 +306,7 @@ static void BM_GPU_BATCH_IDST(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_IDST)->ArgName("Ms")->Arg(350)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_IDST)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_IDCT4(benchmark::State& state) {
@@ -326,7 +325,7 @@ static void BM_GPU_BATCH_IDCT4(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_IDCT4)->ArgName("Ms")->Arg(350)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_IDCT4)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_IDCT8(benchmark::State& state) {
@@ -345,7 +344,7 @@ static void BM_GPU_BATCH_IDCT8(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_IDCT8)->ArgName("Ms")->Arg(150)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_IDCT8)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_IDCT16(benchmark::State& state) {
@@ -364,7 +363,7 @@ static void BM_GPU_BATCH_IDCT16(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_IDCT16)->ArgName("Ms")->Arg(100)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_IDCT16)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 
 static void BM_GPU_BATCH_IDCT32(benchmark::State& state) {
@@ -383,7 +382,7 @@ static void BM_GPU_BATCH_IDCT32(benchmark::State& state) {
 	}
 	cudaDestroy();
 }
-BENCHMARK(BM_GPU_BATCH_IDCT32)->ArgName("Ms")->Arg(100)->UseManualTime();
+BENCHMARK(BM_GPU_BATCH_IDCT32)->ArgName("Ms")->Arg(10000)->UseManualTime();
 
 static void BM_ASM_DST(benchmark::State& state) {
 

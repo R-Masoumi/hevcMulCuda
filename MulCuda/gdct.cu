@@ -518,85 +518,100 @@ __global__ void partialButterfly4(const int16_t* src, int16_t* dst, int shift, i
 //}
 
 template<FTYPE ftype>
-__global__ void transform1stepBatch(const int16_t *src, int16_t *dst, const int n, const int shift1, const int shift2) {
-	int row = threadIdx.y;
-	int col = threadIdx.x;
-	int m = blockIdx.x;
+__global__ void transform1stepBatch(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2) {
+	int rowSet = threadIdx.y;
+	int colSet = threadIdx.x;
+	int i = blockIdx.x;
 	int size = n*n;
 	extern __shared__ int16_t shared[];
-	shared[row * n + col] = src[m*size+row * n + col];
-	int size2 = size * 2;
-	switch (ftype)
-	{
-	case DST:
-	case IDST:
-		shared[size + row*n + col] = ta[row][col];
-		break;
-	case DCT4:
-	case IDCT4:
-		shared[size + row*n + col] = t4[row][col];
-		break;
-	case DCT8:
-	case IDCT8:
-		shared[size + row*n + col] = t8[row][col];
-		break;
-	case DCT16:
-	case IDCT16:
-		shared[size + row*n + col] = t16[row][col];
-		break;
-	case DCT32:
-	case IDCT32:
-		shared[size + row*n + col] = t32[row][col];
-		break;
-	}
-	__syncthreads();
-	int sum = 0;
-	for (int i = 0; i < n; i++)
-	{
-		switch (ftype)
-		{
-		case DST:
-		case DCT4:
-		case DCT8:
-		case DCT16:
-		case DCT32:
-			sum += shared[size + row*n + i] * shared[i * n + col];
-			break;
-		case IDST:
-		case IDCT4:
-		case IDCT8:
-		case IDCT16:
-		case IDCT32:
-			sum += shared[size + i*n + row] * shared[i * n + col];
-			break;
+	const int fullSize = 32*32;
+	const int fullSize2 = 32*32*2;
+	int row32 = rowSet / n;
+	int col32 = colSet / n;
+	int row = rowSet % n;
+	int col = colSet % n;
+	int setCapacity = 32 / n;
+	int setIndex = row32 * setCapacity + col32;
+	int setBase = setIndex * size;
+	int fullBase = i * fullSize + setBase;
+	if (i * setCapacity* setCapacity + setIndex < m){
+		shared[setBase + row * n + col] = src[fullBase + row * n + col];
+		int tBase = fullSize2;
+		int midBase = fullSize + setBase;
+		if (rowSet < n && colSet < n){
+			switch (ftype)
+			{
+			case DST:
+			case IDST:
+				shared[tBase + row*n + col] = ta[row][col];
+				break;
+			case DCT4:
+			case IDCT4:
+				shared[tBase + +row*n + col] = t4[row][col];
+				break;
+			case DCT8:
+			case IDCT8:
+				shared[tBase + row*n + col] = t8[row][col];
+				break;
+			case DCT16:
+			case IDCT16:
+				shared[tBase + row*n + col] = t16[row][col];
+				break;
+			case DCT32:
+			case IDCT32:
+				shared[tBase + row*n + col] = t32[row][col];
+				break;
+			}
 		}
-	}
-	sum >>= shift1;
-	shared[size2 + row * n + col] = sum;
-	__syncthreads();
+		__syncthreads();
+		int sum = 0;
+		for (int i = 0; i < n; i++)
+		{
+			switch (ftype)
+			{
+			case DST:
+			case DCT4:
+			case DCT8:
+			case DCT16:
+			case DCT32:
+				sum += shared[tBase + row*n + i] * shared[setBase + i * n + col];
+				break;
+			case IDST:
+			case IDCT4:
+			case IDCT8:
+			case IDCT16:
+			case IDCT32:
+				sum += shared[tBase + i*n + row] * shared[setBase + i * n + col];
+				break;
+			}
+		}
+		sum >>= shift1;
+		shared[midBase + row * n + col] = (int16_t)g_x265_clip3(-32768, 32767, sum);
+		__syncthreads();
 
-	for (int i = 0; i < n; i++)
-	{
-		switch (ftype)
+		for (int i = 0; i < n; i++)
 		{
-		case DST:
-		case DCT4:
-		case DCT8:
-		case DCT16:
-		case DCT32:
-			sum += shared[size2 + row * n + i] * shared[size + col*n + i];
-			break;
-		case IDST:
-		case IDCT4:
-		case IDCT8:
-		case IDCT16:
-		case IDCT32:
-			sum += shared[size2 + row * n + i] * shared[size + i*n + col];
-			break;
+			switch (ftype)
+			{
+			case DST:
+			case DCT4:
+			case DCT8:
+			case DCT16:
+			case DCT32:
+				sum += shared[midBase + row * n + i] * shared[tBase + col*n + i];
+				break;
+			case IDST:
+			case IDCT4:
+			case IDCT8:
+			case IDCT16:
+			case IDCT32:
+				sum += shared[midBase + row * n + i] * shared[tBase + i*n + col];
+				break;
+			}
 		}
+		sum >>= shift2;
+		dst[fullBase + row * n + col] = (int16_t)g_x265_clip3(-32768, 32767, sum);
 	}
-	sum >>= shift2;
-	dst[m*size + row * n + col] = sum;
 }
 
 template<FTYPE ftype>
@@ -942,16 +957,16 @@ template __global__ void transform1step<IDCT8>(const int16_t *src, int16_t *dst,
 template __global__ void transform1step<IDCT16>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
 template __global__ void transform1step<IDCT32>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
 
-template __global__ void transform1stepBatch<DST>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<DCT4>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<DCT8>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<DCT16>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<DCT32>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<IDST>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<IDCT4>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<IDCT8>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<IDCT16>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
-template __global__ void transform1stepBatch<IDCT32>(const int16_t *src, int16_t *dst, int n, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<DST>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<DCT4>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<DCT8>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<DCT16>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<DCT32>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<IDST>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<IDCT4>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<IDCT8>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<IDCT16>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
+template __global__ void transform1stepBatch<IDCT32>(const int16_t *src, int16_t *dst, const int n, const int m, const int shift1, const int shift2);
 
 template<FTYPE type>
 void gpuTransformPlain(const int16_t* h_src, int16_t* h_dst, int shift1, int shift2, int n) {
@@ -1165,43 +1180,43 @@ void gpuTransform1StepBatch(const int16_t* h_src, int16_t* h_dst, int shift1, in
 	//cudaMalloc(&src, n * n * sizeof(int16_t));
 	//cudaMalloc(&src2, n * n * sizeof(int16_t));
 	//cudaMalloc(&dst, n * n * sizeof(int16_t));
+	int fullsize = m * n * n;
+	cudaMemcpy(src, h_src, fullsize * sizeof(int16_t), cudaMemcpyHostToDevice);
 
-	cudaMemcpy(src, h_src, m * n * n * sizeof(int16_t), cudaMemcpyHostToDevice);
-
-	dim3 dimGrid(m);
-	dim3  dimBlock(n, n);
-	int size = 3 * n*n* sizeof(int16_t);
+	dim3 dimGrid((fullsize / (32*32)) + 1);
+	dim3  dimBlock(32, 32);
+	int size = 3 * 32*32* sizeof(int16_t);
 	switch (ftype)
 	{
 	case DST:
-		transform1stepBatch<DST> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<DST> << <dimGrid, dimBlock, size >> >(src, dst, n,m, shift1, shift2);
 		break;
 	case DCT4:
-		transform1stepBatch<DCT4> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<DCT4> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case DCT8:
-		transform1stepBatch<DCT8> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<DCT8> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case DCT16:
-		transform1stepBatch<DCT16> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<DCT16> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case DCT32:
-		transform1stepBatch<DCT32> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<DCT32> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case IDST:
-		transform1stepBatch<IDST> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<IDST> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case IDCT4:
-		transform1stepBatch<IDCT4> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<IDCT4> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case IDCT8:
-		transform1stepBatch<IDCT8> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<IDCT8> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case IDCT16:
-		transform1stepBatch<IDCT16> << <dimGrid, dimBlock, size >> >(src, dst, n, shift1, shift2);
+		transform1stepBatch<IDCT16> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	case IDCT32:
-		transform1stepBatch<IDCT32> << <dimGrid, dimBlock, size >> >(src, dst,n, shift1, shift2);
+		transform1stepBatch<IDCT32> << <dimGrid, dimBlock, size >> >(src, dst, n, m, shift1, shift2);
 		break;
 	}
 
